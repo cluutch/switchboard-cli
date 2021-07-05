@@ -12,6 +12,7 @@
   "scripts": {
     "create-fulfillment-manager": "ts-node src/client/create-fulfillment-manager.ts",
     "create-data-feed": "ts-node src/client/create-data-feed.ts",
+    "update-data-feed": "ts-node src/client/update-data-feed.ts",
     "start-with-test-validator": "start-server-and-test 'solana-test-validator --reset --quiet' http://localhost:8899/health start",
     "lint": "eslint --ext .ts src/client/* && prettier --check \"src/client/**/*.ts\"",
     "lint:fix": "eslint --ext .ts src/client/* --fix && prettier --write \"src/client/**/*.ts\"",

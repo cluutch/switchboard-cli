@@ -5,16 +5,20 @@ import {
   Account,
   Connection,
   LAMPORTS_PER_SOL,
+  PublicKey
 } from '@solana/web3.js';
 import {
   addFeedJob,
+  AggregatorState,
   createDataFeed,
   createFulfillmentManager, 
   createFulfillmentManagerAuth,
   OracleJob,
+  parseAggregatorAccountData,
   setDataFeedConfigs,
   setFulfillmentManagerConfigs, 
   SWITCHBOARD_DEVNET_PID,
+  updateFeed
 } from '@switchboard-xyz/switchboard-api';
 
 
@@ -166,7 +170,34 @@ export async function createSwitchboardDataFeedAccount(): Promise<void> {
     }
   );
   console.log(
-    'Created DATA AUTH account',
+    'Created DATA AUTH ACCOUNT',
     dataAuthAccount.publicKey.toBase58()
   ); 
 }
+
+export async function updateDataFeed(dataFeedPubkey: PublicKey, dataAuthorizationPubkey: PublicKey): Promise<void> {
+  await updateFeed(
+    connection,
+    payerAccount, 
+    dataFeedPubkey,
+    dataAuthorizationPubkey // optional
+  );
+};
+
+export async function readDataFeed(dataFeedPubkey: PublicKey): Promise<void> {
+  let state: AggregatorState = await parseAggregatorAccountData(connection, dataFeedPubkey);
+  console.log(`(${dataFeedPubkey.toBase58()}) state.\n`,
+                JSON.stringify(state.toJSON(), null, 2));
+
+};
+
+export async function refreshSwitchboardFeed(dataFeedPubkey: PublicKey, dataAuthorizationPubkey: PublicKey): Promise<void> {
+  console.log("Reading from feed before update");
+  await readDataFeed(dataFeedPubkey);
+  
+  updateDataFeed(dataFeedPubkey, dataAuthorizationPubkey);
+  console.log("Updated feed");
+
+  console.log("Reading from feed after update");
+  await readDataFeed(dataFeedPubkey);
+};

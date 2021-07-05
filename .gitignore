@@ -8,3 +8,4 @@ test-ledger/
 config/
 docker-compose.yml
 main-account.json
+fulfillment-manager-account.json
