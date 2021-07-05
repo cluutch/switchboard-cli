@@ -6,15 +6,20 @@ import {
   Connection,
   LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
-import { 
+import {
+  addFeedJob,
+  createDataFeed,
   createFulfillmentManager, 
   createFulfillmentManagerAuth,
+  OracleJob,
+  setDataFeedConfigs,
   setFulfillmentManagerConfigs, 
   SWITCHBOARD_DEVNET_PID,
 } from '@switchboard-xyz/switchboard-api';
 
 
 import {
+  getFulfillmentManager,
   getPayer,
   getRpcUrl,
   newAccountWithLamports,
@@ -29,6 +34,11 @@ let connection: Connection;
  * Account (keypair)
  */
 let payerAccount: Account;
+
+/**
+ * Fullfillment manager (keypair)
+ */
+let fulfillmentManagerAccount: Account;
 
 /**
  * Establish a connection to the cluster
@@ -75,15 +85,14 @@ export async function initSolana(): Promise<void> {
     console.log("Established payer");
 };
 
-
 export async function createSwitchboardFulfillmentManager(): Promise<void> {
-  payerAccount = await getPayer();
-  let fulfillmentManagerAccount = await createFulfillmentManager(connection, payerAccount, SWITCHBOARD_DEVNET_PID);  
+  fulfillmentManagerAccount = await createFulfillmentManager(connection, payerAccount, SWITCHBOARD_DEVNET_PID);  
   console.log(
     'Created FULFILLMENT_MANAGER_KEY',
-    fulfillmentManagerAccount.publicKey.toBase58()
+    fulfillmentManagerAccount.publicKey.toBase58(),
+    'SECRET KEY',
+    fulfillmentManagerAccount.secretKey.toJSON()
   ); 
-
   await setFulfillmentManagerConfigs(
     connection,
     payerAccount,
@@ -106,4 +115,58 @@ export async function createSwitchboardFulfillmentManager(): Promise<void> {
       'Created FULFILLMENT_MANAGER_HEARTBEAT_AUTH_KEY',
       authAccount.publicKey.toBase58()
     ); 
+}
+
+export async function createSwitchboardDataFeedAccount(): Promise<void> {
+  fulfillmentManagerAccount = await getFulfillmentManager();
+  console.log(
+    'Using fulfillment manager',
+    fulfillmentManagerAccount.publicKey.toBase58()
+  );
+  
+  let dataFeedAccount = await createDataFeed(connection, payerAccount, SWITCHBOARD_DEVNET_PID);
+  console.log(
+    'Created DATA FEED ACCOUNT',
+    dataFeedAccount.publicKey.toBase58()
+  ); 
+
+  let jobTasks = [
+    OracleJob.Task.create({
+      httpTask: OracleJob.HttpTask.create({
+        url: "https://api.cluutch.io/v2/daily?date=2021-07-04"
+      }),
+    }),
+    OracleJob.Task.create({
+      jsonParseTask: OracleJob.JsonParseTask.create({ path: "$[0].avg_price_per_ounce" }),
+    })
+  ];
+
+  await addFeedJob(connection, payerAccount, dataFeedAccount, jobTasks);
+
+  await setDataFeedConfigs(
+    connection,
+    payerAccount,
+    dataFeedAccount,
+    {
+        "minConfirmations": 1,
+        "minUpdateDelaySeconds": 10,
+        "fulfillmentManagerPubkey": fulfillmentManagerAccount.publicKey.toBuffer(),
+        "lock": false
+    }
+  );
+
+  let dataAuthAccount = await createFulfillmentManagerAuth(
+    connection,
+    payerAccount,
+    fulfillmentManagerAccount,
+    dataFeedAccount.publicKey,
+    {
+        "authorizeHeartbeat": true,
+        "authorizeUsage": true
+    }
+  );
+  console.log(
+    'Created DATA AUTH account',
+    dataAuthAccount.publicKey.toBase58()
+  ); 
 }

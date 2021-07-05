@@ -70,7 +70,20 @@ export async function getPayer(): Promise<Account> {
     return readAccountFromFile(config.keypair_path);
   } catch (err) {
     console.warn(
-      'Failed to read keypair from CLI config file, falling back to new random keypair',
+      'Failed to read keypair from CLI config file, falling back to new random keypair for payer',
+    );
+    return new Account();
+  }
+}
+
+export async function getFulfillmentManager(): Promise<Account> {
+  try {
+    const config = await getConfig();
+    if (!config.fulfillment_manager_path) throw new Error('Missing keypair path');
+    return readAccountFromFile(config.fulfillment_manager_path);
+  } catch (err) {
+    console.warn(
+      'Failed to read keypair from CLI config file, falling back to new random keypair for fulfillment manager',
     );
     return new Account();
   }
