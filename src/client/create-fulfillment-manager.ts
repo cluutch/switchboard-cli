@@ -5,7 +5,7 @@
 import {
   initSolana,
   createSwitchboardFulfillmentManager
-} from './hello_world';
+} from './lib';
 
 async function main() {
   console.log("Creating Fulfillment Manager...");

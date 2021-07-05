@@ -80,7 +80,7 @@ export async function createSwitchboardFulfillmentManager(): Promise<void> {
   payerAccount = await getPayer();
   let fulfillmentManagerAccount = await createFulfillmentManager(connection, payerAccount, SWITCHBOARD_DEVNET_PID);  
   console.log(
-    'Created fulfillment manager account',
+    'Created FULFILLMENT_MANAGER_KEY',
     fulfillmentManagerAccount.publicKey.toBase58()
   ); 
 
@@ -92,9 +92,6 @@ export async function createSwitchboardFulfillmentManager(): Promise<void> {
       "usageAuthRequired": true,
       "lock": false
     });
-  console.log(
-    'Set fulfillment manager configs',
-  ); 
   
   let authAccount = await createFulfillmentManagerAuth(
     connection,
@@ -106,7 +103,7 @@ export async function createSwitchboardFulfillmentManager(): Promise<void> {
         "authorizeUsage": false
     });
     console.log(
-      'Created AUTH account',
+      'Created FULFILLMENT_MANAGER_HEARTBEAT_AUTH_KEY',
       authAccount.publicKey.toBase58()
     ); 
 }
