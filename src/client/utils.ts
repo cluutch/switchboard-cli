@@ -39,6 +39,8 @@ async function getConfig(): Promise<any> {
     'config.yml',
   );
   const configYml = await fs.readFile(CONFIG_FILE_PATH, {encoding: 'utf8'});
+  console.log(`Reading config from ${configYml}`);
+  
   return yaml.parse(configYml);
 }
 
